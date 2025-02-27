@@ -7,13 +7,6 @@ import "test/FloatUtils.sol";
 
 contract Float128FuzzTest is FloatUtils {
     using Float128 for int256;
-    function setBounds(int aMan, int aExp, int bMan, int bExp) internal pure returns (int _aMan, int _aExp, int _bMan, int _bExp) {
-        // numbers with more than 38 digits lose precision
-        _aMan = bound(aMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999);
-        _aExp = bound(aExp, -74, 74);
-        _bMan = bound(bMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999);
-        _bExp = bound(bExp, -74, 74);
-    }
 
     function checkResults(int rMan, int rExp, int pyMan, int pyExp) internal pure {
         checkResults(rMan, rExp, pyMan, pyExp, false);
@@ -85,11 +78,11 @@ contract Float128FuzzTest is FloatUtils {
 
         Float memory aFloat = aMan.toFloat(aExp);
         Float memory bFloat = bMan.toFloat(bExp);
-        if(bMan == 0) {
+        if (bMan == 0) {
             vm.expectRevert("float128: division by zero");
         }
         Float memory result = Float128.div(aFloat, bFloat);
-        if(bMan != 0) {
+        if (bMan != 0) {
             int rMan = result.mantissa;
             int rExp = result.exponent;
 
@@ -107,11 +100,11 @@ contract Float128FuzzTest is FloatUtils {
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         packedFloat b = Float128.toPackedFloat(bMan, bExp);
-        if(bMan == 0) {
+        if (bMan == 0) {
             vm.expectRevert("float128: division by zero");
         }
         packedFloat result = Float128.div(a, b);
-        if(bMan != 0) {
+        if (bMan != 0) {
             (int rMan, int rExp) = Float128.decode(result);
 
             checkResults(rMan, rExp, pyMan, pyExp);
@@ -187,11 +180,11 @@ contract Float128FuzzTest is FloatUtils {
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
 
-        if(aMan < 0) {
+        if (aMan < 0) {
             vm.expectRevert("float128: squareroot of negative");
         }
         packedFloat result = Float128.sqrt(a);
-        if(aMan >= 0 ) {
+        if (aMan >= 0) {
             (int rMan, int rExp) = Float128.decode(result);
 
             checkResults(rMan, rExp, pyMan, pyExp);
@@ -205,8 +198,8 @@ contract Float128FuzzTest is FloatUtils {
         string[] memory inputs = _buildFFIMul128(aMan < 0 ? aMan * -1 : aMan, aExp, 0, 0, "sqrt");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-        
-        if(aMan < 0) {
+
+        if (aMan < 0) {
             vm.expectRevert("float128: squareroot of negative");
         }
         Float memory result = Float128.sqrt(aMan.toFloat(aExp));
@@ -223,9 +216,9 @@ contract Float128FuzzTest is FloatUtils {
         float.exponent = float.exponent - exp;
 
         int256 retVal = 0;
-        if(man != 0) {
+        if (man != 0) {
             retVal = _reverseNormalize(float);
-        } 
+        }
         assertEq(man, retVal);
     }
 
@@ -240,7 +233,7 @@ contract Float128FuzzTest is FloatUtils {
         comp.exponent -= exp;
 
         int256 retVal = 0;
-        if(man != 0) {
+        if (man != 0) {
             retVal = _reverseNormalize(comp);
         }
         assertEq(man, retVal);
@@ -254,7 +247,7 @@ contract Float128FuzzTest is FloatUtils {
         unpacked.exponent -= exp;
 
         int256 retVal = 0;
-        if(man != 0) {
+        if (man != 0) {
             retVal = _reverseNormalize(unpacked);
         }
         assertEq(man, retVal);
@@ -274,7 +267,7 @@ contract Float128FuzzTest is FloatUtils {
         comp.exponent -= exp;
 
         int256 retVal = 0;
-        if(man != 0) {
+        if (man != 0) {
             retVal = _reverseNormalize(comp);
         }
 
@@ -284,7 +277,6 @@ contract Float128FuzzTest is FloatUtils {
     function testConvertToNormalizeFuzz(int256 man, int256 exp) public {
         (man, exp, , ) = setBounds(man, exp, 0, 0);
 
-
         Float memory initial;
         initial.mantissa = man;
         initial.exponent = exp;
@@ -292,7 +284,7 @@ contract Float128FuzzTest is FloatUtils {
         comp.exponent -= exp;
 
         int256 retVal = 0;
-        if(man != 0) {
+        if (man != 0) {
             retVal = _reverseNormalize(comp);
         }
 
@@ -303,11 +295,11 @@ contract Float128FuzzTest is FloatUtils {
         console2.log(man);
         uint256 comparison = 1;
         uint256 iter = 0;
-        while(comparison <= man) {
+        while (comparison <= man) {
             comparison *= 10;
             iter += 1;
-            if(comparison == 1e77 && comparison < man) {
-                iter +=1;
+            if (comparison == 1e77 && comparison < man) {
+                iter += 1;
                 break;
             }
         }

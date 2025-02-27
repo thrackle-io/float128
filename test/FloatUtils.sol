@@ -20,19 +20,27 @@ contract FloatUtils is Test {
     function _reverseNormalize(Float memory float) internal pure returns (int256 mantissa) {
         int256 normalizedExponent = float.exponent;
         bool negative = false;
-        if(float.exponent < 0) {
+        if (float.exponent < 0) {
             normalizedExponent = normalizedExponent * -1;
             negative = true;
         }
         int256 expo = 1;
-        for(int i = 0; i < normalizedExponent; i++) {
+        for (int i = 0; i < normalizedExponent; i++) {
             expo = expo * 10;
         }
         mantissa = float.mantissa;
-        if(negative) {
+        if (negative) {
             mantissa = mantissa / expo;
         } else {
             mantissa = mantissa * expo;
         }
+    }
+
+    function setBounds(int aMan, int aExp, int bMan, int bExp) internal pure returns (int _aMan, int _aExp, int _bMan, int _bExp) {
+        // numbers with more than 38 digits lose precision
+        _aMan = bound(aMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999);
+        _aExp = bound(aExp, -74, 74);
+        _bMan = bound(bMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999);
+        _bExp = bound(bExp, -74, 74);
     }
 }

@@ -146,42 +146,43 @@ Here are the current Gas Results:
 
 #### Gas Report - functions using Float structs
 
-| Function (and scenario) | Gas Units |
-| ----------------------- | --------- |
-| Addition    | 648       |
-| Addition (matching exponents) | 504 |
-| Addition (subtraction via addition) | 1248 |
-| Subtraction | 1171 |
-| Subtraction (matching exponents) | 1014 |
-| Subtraction (addition via subtraction) | 610 |
-| Multiplication | 289 |
-| Multiplication (by zero) | 289 |
-| Division | 278 |
-| Division (numerator is zero) | 278 |
-| Square Root | 1277 |
+| Function (and scenario) | Min | Average | Max |  
+| ----------------------- | --------- | -------| -------|
+| Addition                | 596       | 1174   | 1778
+| Addition (matching exponents) | 499 | 941    | 1556
+| Addition (subtraction via addition) | 609 | 1331 | 1791
+| Subtraction | 577 | 1175 | 1769
+| Subtraction (matching exponents) | 491 | 928 | 1567
+| Subtraction (addition via subtraction) | 604 | 1018 | 1784
+| Multiplication | 295 | 575 | 856
+| Multiplication (by zero) | 295 | 576 | 858
+| Division | 296 | 590 | 886
+| Division (numerator is zero) | 295 | 577 | 860 
+| Square Root | 1247 | 1416 | 1588
 
 #### Gas Report - functions using packedFloats
 
-| Function (and scenario) | Gas Units |
-| ----------------------- | --------- |
-| Addition    | 618       |
-| Addition (matching exponents) | 524 |
-| Addition (subtraction via addition) | 1233 |
-| Subtraction | 1229 |
-| Subtraction (matching exponents) | 1048 |
-| Subtraction (addition via subtraction) | 615 |
-| Multiplication | 338 |
-| Multiplication (by zero) | 121 |
-| Division | 277 |
-| Division (numerator is zero) | 102 |
-| Square Root | 1217 |
-| Log10 | 399 |
+| Function (and scenario) |  Min | Average | Max |  
+| ----------------------- | --------- | -------| -------|
+| Addition    | 472 | 841 | 1158
+| Addition (matching exponents) | 437 | 581 | 1158
+| Addition (subtraction via addition) | 481 | 982 | 1152
+| Subtraction | 469 | 840 | 1157
+| Subtraction (matching exponents) | 434 | 589 | 1158
+| Subtraction (addition via subtraction) | 434 | 675 | 1149
+| Multiplication | 301 | 302 | 303
+| Multiplication (by zero) | 118 | 118 | 118
+| Division | 269 | 283 | 299
+| Division (numerator is zero) | 123 | 123 | 123
+| Square Root | 932 | 951 | 970
+
 
 #### Gas Report - Builder + Conversion functions
 
-| Function (and scenario) | Gas Units |
-| ----------------------- | --------- |
-| toFloat    | 960       |
-| toFloat (already normalized) | 471 |
-| convertToPackedFloat | 296 |
-| convertToUnpackedFloat | 334 |
+| Function (and scenario) |  Min | Average | Max |  
+| ----------------------- | --------- | -------| -------|
+| toFloat    | 456 | 1416 | 2749
+| toFloat (already normalized) | 458 | 1401 | 2353
+| convertToPackedFloat | 281 | 343 | 764
+| convertToUnpackedFloat | 307 | 596 | 886
+| Log10 | 345 | 346 | 351

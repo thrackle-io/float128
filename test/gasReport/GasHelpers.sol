@@ -5,6 +5,11 @@ contract GasHelpers {
     string private checkpointLabel;
     uint256 private checkpointGasLeft = 1; // Start the slot warm.
 
+    uint256 min;
+    uint256 avg;
+    uint256 max;
+    uint256 gasUsed;
+
     event Gas_Log(string _label, uint256 _gasDelta);
 
     function startMeasuringGas(string memory label) internal virtual {
@@ -27,5 +32,13 @@ contract GasHelpers {
     function _primer() internal {
         startMeasuringGas("Gas Report Primer");
         stopMeasuringGas();
+    }
+
+    function _resetGasUsed() internal {
+        // Set min to a large number so it is guaranteed to update
+        min = 1e18;
+        avg = 0;
+        max = 0;
+        gasUsed = 0;
     }
 }

@@ -434,7 +434,7 @@ library Float128 {
 
             roundedDownResult := div(x, s)
             if or(gt(s, roundedDownResult), eq(s, roundedDownResult)) {
-                s:= roundedDownResult
+                s := roundedDownResult
             }
 
             // exponent should now be half of what it was

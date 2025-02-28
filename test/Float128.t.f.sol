@@ -85,11 +85,11 @@ contract Float128FuzzTest is FloatUtils {
 
         Float memory aFloat = aMan.toFloat(aExp);
         Float memory bFloat = bMan.toFloat(bExp);
-        if(bMan == 0) {
+        if (bMan == 0) {
             vm.expectRevert("float128: division by zero");
         }
         Float memory result = Float128.div(aFloat, bFloat);
-        if(bMan != 0) {
+        if (bMan != 0) {
             int rMan = result.mantissa;
             int rExp = result.exponent;
 
@@ -107,11 +107,11 @@ contract Float128FuzzTest is FloatUtils {
 
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
         packedFloat b = Float128.toPackedFloat(bMan, bExp);
-        if(bMan == 0) {
+        if (bMan == 0) {
             vm.expectRevert("float128: division by zero");
         }
         packedFloat result = Float128.div(a, b);
-        if(bMan != 0) {
+        if (bMan != 0) {
             (int rMan, int rExp) = Float128.decode(result);
 
             checkResults(rMan, rExp, pyMan, pyExp);
@@ -187,11 +187,11 @@ contract Float128FuzzTest is FloatUtils {
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
         packedFloat a = Float128.toPackedFloat(aMan, aExp);
 
-        if(aMan < 0) {
+        if (aMan < 0) {
             vm.expectRevert("float128: squareroot of negative");
         }
         packedFloat result = Float128.sqrt(a);
-        if(aMan >= 0 ) {
+        if (aMan >= 0) {
             (int rMan, int rExp) = Float128.decode(result);
 
             checkResults(rMan, rExp, pyMan, pyExp);
@@ -205,8 +205,8 @@ contract Float128FuzzTest is FloatUtils {
         string[] memory inputs = _buildFFIMul128(aMan < 0 ? aMan * -1 : aMan, aExp, 0, 0, "sqrt");
         bytes memory res = vm.ffi(inputs);
         (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
-        
-        if(aMan < 0) {
+
+        if (aMan < 0) {
             vm.expectRevert("float128: squareroot of negative");
         }
         Float memory result = Float128.sqrt(aMan.toFloat(aExp));
@@ -223,22 +223,22 @@ contract Float128FuzzTest is FloatUtils {
         bool retVal = Float128.lt(a, b);
         bool comparison = false;
 
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
+        if (a.mantissa == 0 || b.mantissa == 0) {
+            if (a.mantissa == 0 && b.mantissa == 0) {
                 comparison = false;
-            } else if(a.mantissa == 0) {
-                if(b.mantissa > 0) {
+            } else if (a.mantissa == 0) {
+                if (b.mantissa > 0) {
                     comparison = true;
                 }
             } else {
-                if(a.mantissa < 0) {
+                if (a.mantissa < 0) {
                     comparison = true;
-                } 
+                }
             }
         } else {
-            if(a.exponent < b.exponent) {
+            if (a.exponent < b.exponent) {
                 comparison = true;
-            } else if(b.exponent < a.exponent) {
+            } else if (b.exponent < a.exponent) {
                 comparison = false;
             } else {
                 comparison = a.mantissa < b.mantissa;
@@ -254,22 +254,22 @@ contract Float128FuzzTest is FloatUtils {
         bool retVal = Float128.le(a, b);
         bool comparison = false;
 
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
+        if (a.mantissa == 0 || b.mantissa == 0) {
+            if (a.mantissa == 0 && b.mantissa == 0) {
                 comparison = true;
-            } else if(a.mantissa == 0) {
-                if(b.mantissa > 0) {
+            } else if (a.mantissa == 0) {
+                if (b.mantissa > 0) {
                     comparison = true;
                 }
             } else {
-                if(a.mantissa < 0) {
+                if (a.mantissa < 0) {
                     comparison = true;
-                } 
+                }
             }
         } else {
-            if(a.exponent < b.exponent) {
+            if (a.exponent < b.exponent) {
                 comparison = true;
-            } else if(b.exponent < a.exponent) {
+            } else if (b.exponent < a.exponent) {
                 comparison = false;
             } else {
                 comparison = a.mantissa <= b.mantissa;
@@ -285,22 +285,22 @@ contract Float128FuzzTest is FloatUtils {
         bool retVal = Float128.gt(a, b);
         bool comparison = false;
 
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
+        if (a.mantissa == 0 || b.mantissa == 0) {
+            if (a.mantissa == 0 && b.mantissa == 0) {
                 comparison = false;
-            } else if(a.mantissa == 0) {
-                if(b.mantissa < 0) {
+            } else if (a.mantissa == 0) {
+                if (b.mantissa < 0) {
                     comparison = true;
                 }
             } else {
-                if(a.mantissa > 0) {
+                if (a.mantissa > 0) {
                     comparison = true;
-                } 
+                }
             }
         } else {
-            if(a.exponent > b.exponent) {
+            if (a.exponent > b.exponent) {
                 comparison = true;
-            } else if(b.exponent > a.exponent) {
+            } else if (b.exponent > a.exponent) {
                 comparison = false;
             } else {
                 comparison = a.mantissa > b.mantissa;
@@ -316,22 +316,22 @@ contract Float128FuzzTest is FloatUtils {
         bool retVal = Float128.ge(a, b);
         bool comparison = false;
 
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
+        if (a.mantissa == 0 || b.mantissa == 0) {
+            if (a.mantissa == 0 && b.mantissa == 0) {
                 comparison = true;
-            } else if(a.mantissa == 0) {
-                if(b.mantissa < 0) {
+            } else if (a.mantissa == 0) {
+                if (b.mantissa < 0) {
                     comparison = true;
                 }
             } else {
-                if(a.mantissa > 0) {
+                if (a.mantissa > 0) {
                     comparison = true;
-                } 
+                }
             }
         } else {
-            if(a.exponent > b.exponent) {
+            if (a.exponent > b.exponent) {
                 comparison = true;
-            } else if(b.exponent > a.exponent) {
+            } else if (b.exponent > a.exponent) {
                 comparison = false;
             } else {
                 comparison = a.mantissa >= b.mantissa;
@@ -352,26 +352,26 @@ contract Float128FuzzTest is FloatUtils {
         Float memory floA = Float128.toFloat(aMan, aExp);
         Float memory floB = Float128.toFloat(bMan, bExp);
 
-        if(floA.mantissa == 0 || floB.mantissa == 0) {
-            if(floA.mantissa == 0 && floB.mantissa == 0) {
+        if (floA.mantissa == 0 || floB.mantissa == 0) {
+            if (floA.mantissa == 0 && floB.mantissa == 0) {
                 comparison = false;
-            } else if(floA.mantissa == 0) {
-                if(floB.mantissa > 0) {
+            } else if (floA.mantissa == 0) {
+                if (floB.mantissa > 0) {
                     comparison = true;
                 } else {
                     comparison = false;
                 }
             } else {
-                if(floA.mantissa > 0) {
+                if (floA.mantissa > 0) {
                     comparison = false;
                 } else {
                     comparison = true;
                 }
             }
         } else {
-            if(floA.exponent < floB.exponent) {
+            if (floA.exponent < floB.exponent) {
                 comparison = true;
-            } else if(floB.exponent < floA.exponent) {
+            } else if (floB.exponent < floA.exponent) {
                 comparison = false;
             } else {
                 comparison = floA.mantissa < floB.mantissa;
@@ -391,26 +391,26 @@ contract Float128FuzzTest is FloatUtils {
         Float memory floA = Float128.toFloat(aMan, aExp);
         Float memory floB = Float128.toFloat(bMan, bExp);
 
-       if(floA.mantissa == 0 || floB.mantissa == 0) {
-            if(floA.mantissa == 0 && floB.mantissa == 0) {
+        if (floA.mantissa == 0 || floB.mantissa == 0) {
+            if (floA.mantissa == 0 && floB.mantissa == 0) {
                 comparison = true;
-            } else if(floA.mantissa == 0) {
-                if(floB.mantissa > 0) {
+            } else if (floA.mantissa == 0) {
+                if (floB.mantissa > 0) {
                     comparison = true;
                 } else {
                     comparison = false;
                 }
             } else {
-                if(floA.mantissa > 0) {
+                if (floA.mantissa > 0) {
                     comparison = false;
                 } else {
                     comparison = true;
                 }
             }
         } else {
-            if(floA.exponent < floB.exponent) {
+            if (floA.exponent < floB.exponent) {
                 comparison = true;
-            } else if(floB.exponent < floA.exponent) {
+            } else if (floB.exponent < floA.exponent) {
                 comparison = false;
             } else {
                 comparison = floA.mantissa <= floB.mantissa;
@@ -430,26 +430,26 @@ contract Float128FuzzTest is FloatUtils {
         Float memory floA = Float128.toFloat(aMan, aExp);
         Float memory floB = Float128.toFloat(bMan, bExp);
 
-       if(floA.mantissa == 0 || floB.mantissa == 0) {
-            if(floA.mantissa == 0 && floB.mantissa == 0) {
+        if (floA.mantissa == 0 || floB.mantissa == 0) {
+            if (floA.mantissa == 0 && floB.mantissa == 0) {
                 comparison = false;
-            } else if(floA.mantissa == 0) {
-                if(floB.mantissa < 0) {
+            } else if (floA.mantissa == 0) {
+                if (floB.mantissa < 0) {
                     comparison = true;
                 } else {
                     comparison = false;
                 }
             } else {
-                if(floA.mantissa < 0) {
+                if (floA.mantissa < 0) {
                     comparison = false;
                 } else {
                     comparison = true;
                 }
             }
         } else {
-            if(floA.exponent > floB.exponent) {
+            if (floA.exponent > floB.exponent) {
                 comparison = true;
-            } else if(floB.exponent > floA.exponent) {
+            } else if (floB.exponent > floA.exponent) {
                 comparison = false;
             } else {
                 comparison = floA.mantissa > floB.mantissa;
@@ -469,26 +469,26 @@ contract Float128FuzzTest is FloatUtils {
         Float memory floA = Float128.toFloat(aMan, aExp);
         Float memory floB = Float128.toFloat(bMan, bExp);
 
-       if(floA.mantissa == 0 || floB.mantissa == 0) {
-            if(floA.mantissa == 0 && floB.mantissa == 0) {
+        if (floA.mantissa == 0 || floB.mantissa == 0) {
+            if (floA.mantissa == 0 && floB.mantissa == 0) {
                 comparison = true;
-            } else if(floA.mantissa == 0) {
-                if(floB.mantissa < 0) {
+            } else if (floA.mantissa == 0) {
+                if (floB.mantissa < 0) {
                     comparison = true;
                 } else {
                     comparison = false;
                 }
             } else {
-                if(floA.mantissa < 0) {
+                if (floA.mantissa < 0) {
                     comparison = false;
                 } else {
                     comparison = true;
                 }
             }
         } else {
-            if(floA.exponent > floB.exponent) {
+            if (floA.exponent > floB.exponent) {
                 comparison = true;
-            } else if(floB.exponent > floA.exponent) {
+            } else if (floB.exponent > floA.exponent) {
                 comparison = false;
             } else {
                 comparison = floA.mantissa >= floB.mantissa;
@@ -504,9 +504,9 @@ contract Float128FuzzTest is FloatUtils {
         float.exponent = float.exponent - exp;
 
         int256 retVal = 0;
-        if(man != 0) {
+        if (man != 0) {
             retVal = _reverseNormalize(float);
-        } 
+        }
         assertEq(man, retVal);
     }
 
@@ -521,7 +521,7 @@ contract Float128FuzzTest is FloatUtils {
         comp.exponent -= exp;
 
         int256 retVal = 0;
-        if(man != 0) {
+        if (man != 0) {
             retVal = _reverseNormalize(comp);
         }
         assertEq(man, retVal);
@@ -535,7 +535,7 @@ contract Float128FuzzTest is FloatUtils {
         unpacked.exponent -= exp;
 
         int256 retVal = 0;
-        if(man != 0) {
+        if (man != 0) {
             retVal = _reverseNormalize(unpacked);
         }
         assertEq(man, retVal);
@@ -555,7 +555,7 @@ contract Float128FuzzTest is FloatUtils {
         comp.exponent -= exp;
 
         int256 retVal = 0;
-        if(man != 0) {
+        if (man != 0) {
             retVal = _reverseNormalize(comp);
         }
 
@@ -565,7 +565,6 @@ contract Float128FuzzTest is FloatUtils {
     function testConvertToNormalizeFuzz(int256 man, int256 exp) public pure {
         (man, exp, , ) = setBounds(man, exp, 0, 0);
 
-
         Float memory initial;
         initial.mantissa = man;
         initial.exponent = exp;
@@ -573,7 +572,7 @@ contract Float128FuzzTest is FloatUtils {
         comp.exponent -= exp;
 
         int256 retVal = 0;
-        if(man != 0) {
+        if (man != 0) {
             retVal = _reverseNormalize(comp);
         }
 
@@ -584,11 +583,11 @@ contract Float128FuzzTest is FloatUtils {
         console2.log(man);
         uint256 comparison = 1;
         uint256 iter = 0;
-        while(comparison <= man) {
+        while (comparison <= man) {
             comparison *= 10;
             iter += 1;
-            if(comparison == 1e77 && comparison < man) {
-                iter +=1;
+            if (comparison == 1e77 && comparison < man) {
+                iter += 1;
                 break;
             }
         }
@@ -596,6 +595,29 @@ contract Float128FuzzTest is FloatUtils {
         uint256 retVal = Float128.findNumberOfDigits(man);
 
         assertEq(iter, retVal);
+    }
+
+    function testStruct_ln(int aMan, int aExp) public {
+        (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
+        // sqrt root should always receive a positive number
+        if (aMan < 0) aMan = aMan * -1;
+        aMan = 271828182845904523536028747135266249;
+        aExp = -37;
+
+        string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "sqrt");
+        bytes memory res = vm.ffi(inputs);
+        (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+
+        Float memory result = Float128.ln(aMan.toFloat(aExp));
+        int rMan = result.mantissa;
+        int rExp = result.exponent;
+
+        console2.log("aMan", aMan);
+        console2.log("aExp", aExp);
+        console2.log("rMan", rMan);
+        console2.log("rExp", rExp);
+
+        // checkResults(rMan, rExp, pyMan, pyExp);
     }
 
     function findNumberOfDigits(uint x) internal pure returns (uint log) {

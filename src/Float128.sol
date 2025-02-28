@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import "forge-std/console2.sol";
+
 /**
  * @title Floating point Library base 10 with 38 digits signed
  * @dev the library uses 2 exclusive types which means they can carry out operations only with their own type. They can
@@ -41,6 +43,9 @@ library Float128 {
     uint constant BASE_TO_THE_MAX_DIGITS_PLUS_1 = 1000000000000000000000000000000000000000;
     uint constant MAX_75_DIGIT_NUMBER = 999999999999999999999999999999999999999999999999999999999999999999999999999;
     uint constant MAX_76_DIGIT_NUMBER = 9999999999999999999999999999999999999999999999999999999999999999999999999999;
+    uint constant LOG2_OF_10_38_DIGITS = 33219280948873623478703194294893901758; // exponent -37
+    uint constant LOG2_OF_10_74_DIGITS = 33219280948873623478703194294893901758648313930245806120547563958159347766; // exponent -75
+    uint constant LOG2_OF_E = 14426950408889634073599246810018921374; // exponent -37
 
     /**
      * @dev adds 2 signed floating point numbers
@@ -434,7 +439,7 @@ library Float128 {
 
             roundedDownResult := div(x, s)
             if or(gt(s, roundedDownResult), eq(s, roundedDownResult)) {
-                s:= roundedDownResult
+                s := roundedDownResult
             }
 
             // exponent should now be half of what it was
@@ -485,7 +490,7 @@ library Float128 {
                 }
                 if eq(aExp, bExp) {
                     let aNeg := false
-                    let bNeg := false 
+                    let bNeg := false
                     if and(a, MANTISSA_SIGN_MASK) {
                         aNeg := true
                     }
@@ -497,14 +502,14 @@ library Float128 {
                     }
                     if iszero(or(aNeg, bNeg)) {
                         retVal := lt(aMan, bMan)
-                    }  
+                    }
                     if xor(aNeg, bNeg) {
                         retVal := aNeg
                     }
                 }
             }
         }
-    } 
+    }
 
     /**
      * @dev performs a less than or equals to comparison
@@ -543,7 +548,7 @@ library Float128 {
                 }
                 if eq(aExp, bExp) {
                     let aNeg := false
-                    let bNeg := false 
+                    let bNeg := false
                     if and(a, MANTISSA_SIGN_MASK) {
                         aNeg := true
                     }
@@ -555,14 +560,14 @@ library Float128 {
                     }
                     if iszero(or(aNeg, bNeg)) {
                         retVal := or(lt(aMan, bMan), eq(aMan, bMan))
-                    }  
+                    }
                     if xor(aNeg, bNeg) {
                         retVal := aNeg
                     }
                 }
             }
         }
-    } 
+    }
 
     /**
      * @dev performs a greater than comparison
@@ -603,7 +608,7 @@ library Float128 {
                 }
                 if eq(aExp, bExp) {
                     let aNeg := false
-                    let bNeg := false 
+                    let bNeg := false
                     if and(a, MANTISSA_SIGN_MASK) {
                         aNeg := true
                     }
@@ -615,14 +620,14 @@ library Float128 {
                     }
                     if iszero(or(aNeg, bNeg)) {
                         retVal := lt(bMan, aMan)
-                    }  
+                    }
                     if xor(aNeg, bNeg) {
                         retVal := bNeg
                     }
                 }
             }
         }
-    } 
+    }
 
     /**
      * @dev performs a greater than or equal to comparison
@@ -664,7 +669,7 @@ library Float128 {
                 }
                 if eq(aExp, bExp) {
                     let aNeg := false
-                    let bNeg := false 
+                    let bNeg := false
                     if and(a, MANTISSA_SIGN_MASK) {
                         aNeg := true
                     }
@@ -676,14 +681,14 @@ library Float128 {
                     }
                     if iszero(or(aNeg, bNeg)) {
                         retVal := or(lt(bMan, aMan), eq(aMan, bMan))
-                    }  
+                    }
                     if xor(aNeg, bNeg) {
                         retVal := bNeg
                     }
                 }
             }
         }
-    } 
+    }
 
     /**
      * @dev adds 2 signed floating point numbers
@@ -993,6 +998,33 @@ library Float128 {
         } else r.exponent = 0 - int(ZERO_OFFSET);
     }
 
+    function ln(Float memory _x) public pure returns (Float memory r) {
+        Float memory x = _x;
+
+        uint manLog2 = log2(uint(x.mantissa)) * BASE ** MAX_DIGITS_MINUS_1;
+        console2.log("manLog2 ", manLog2);
+        bool negativeExponent = x.exponent < 0;
+        console2.log("negativeExponent ", negativeExponent);
+        int expLog2 = x.exponent * int(LOG2_OF_10_38_DIGITS);
+        console2.log("expLog2 ", expLog2);
+        int num = int(manLog2) + expLog2;
+        console2.log("num ", num);
+        uint numDigits = findNumberOfDigits(num < 0 ? uint(num * -1) : uint(num));
+        console2.log("numDigits ", numDigits);
+        uint adj = MAX_DIGITS * 2 - numDigits;
+        console2.log("adj ", adj);
+        num *= int(BASE ** (adj));
+        console2.log("num ", num);
+        r.exponent = 0 - int(adj);
+        console2.log("r.exponent ", r.exponent);
+        r.mantissa = num / int(LOG2_OF_E);
+        console2.log("r.mantissa ", r.mantissa);
+        if (r.mantissa > int(MAX_38_DIGIT_NUMBER) || r.mantissa < 0 - int(MAX_38_DIGIT_NUMBER)) {
+            r.mantissa /= 10;
+            ++r.exponent;
+        }
+    }
+
     /**
      * @dev performs a less than comparison
      * @param a the first term
@@ -1001,24 +1033,23 @@ library Float128 {
      * @notice this version of the function uses only the Float type
      */
     function lt(Float memory a, Float memory b) internal pure returns (bool) {
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
+        if (a.mantissa == 0 || b.mantissa == 0) {
+            if (a.mantissa == 0 && b.mantissa == 0) {
                 return false;
-            } else if(a.mantissa == 0) {
+            } else if (a.mantissa == 0) {
                 return b.mantissa > 0;
             } else {
                 return a.mantissa < 0;
             }
         }
-        if(a.exponent < b.exponent) {
+        if (a.exponent < b.exponent) {
             return true;
-        } else if(b.exponent < a.exponent) {
+        } else if (b.exponent < a.exponent) {
             return false;
         } else {
             return a.mantissa < b.mantissa;
         }
-    
-    } 
+    }
 
     /**
      * @dev performs a less than or equal to comparison
@@ -1028,18 +1059,18 @@ library Float128 {
      * @notice this version of the function uses only the Float type
      */
     function le(Float memory a, Float memory b) internal pure returns (bool) {
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
+        if (a.mantissa == 0 || b.mantissa == 0) {
+            if (a.mantissa == 0 && b.mantissa == 0) {
                 return true;
-            } else if(a.mantissa == 0) {
+            } else if (a.mantissa == 0) {
                 return b.mantissa > 0;
             } else {
                 return a.mantissa < 0;
             }
         }
-        if(a.exponent < b.exponent) {
+        if (a.exponent < b.exponent) {
             return true;
-        } else if(b.exponent < a.exponent) {
+        } else if (b.exponent < a.exponent) {
             return false;
         } else {
             return a.mantissa <= b.mantissa;
@@ -1054,18 +1085,18 @@ library Float128 {
      * @notice this version of the function uses only the Float type
      */
     function gt(Float memory a, Float memory b) internal pure returns (bool) {
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
+        if (a.mantissa == 0 || b.mantissa == 0) {
+            if (a.mantissa == 0 && b.mantissa == 0) {
                 return false;
-            } else if(a.mantissa == 0) {
+            } else if (a.mantissa == 0) {
                 return b.mantissa < 0;
             } else {
                 return a.mantissa > 0;
             }
         }
-        if(a.exponent > b.exponent) {
+        if (a.exponent > b.exponent) {
             return true;
-        } else if(b.exponent > a.exponent) {
+        } else if (b.exponent > a.exponent) {
             return false;
         } else {
             return a.mantissa > b.mantissa;
@@ -1080,18 +1111,18 @@ library Float128 {
      * @notice this version of the function uses only the Float type
      */
     function ge(Float memory a, Float memory b) internal pure returns (bool) {
-        if(a.mantissa == 0 || b.mantissa == 0) {
-            if(a.mantissa == 0 && b.mantissa == 0) {
+        if (a.mantissa == 0 || b.mantissa == 0) {
+            if (a.mantissa == 0 && b.mantissa == 0) {
                 return true;
-            } else if(a.mantissa == 0) {
+            } else if (a.mantissa == 0) {
                 return b.mantissa < 0;
             } else {
                 return a.mantissa > 0;
             }
         }
-        if(a.exponent > b.exponent) {
+        if (a.exponent > b.exponent) {
             return true;
-        } else if(b.exponent > a.exponent) {
+        } else if (b.exponent > a.exponent) {
             return false;
         } else {
             return a.mantissa >= b.mantissa;
@@ -1276,6 +1307,28 @@ library Float128 {
                 }
                 log := add(log, 1)
             }
+        }
+    }
+
+    /// @dev Returns the log2 of `x`.
+    /// Equivalent to computing the index of the most significant bit (MSB) of `x`.
+    /// Returns 0 if `x` is zero.
+    function log2(uint256 x) internal pure returns (uint256 r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+            r := or(r, shl(4, lt(0xffff, shr(r, x))))
+            r := or(r, shl(3, lt(0xff, shr(r, x))))
+            // forgefmt: disable-next-item
+            r := or(
+                r,
+                byte(
+                    and(0x1f, shr(shr(r, x), 0x8421084210842108cc6318c6db6d54be)),
+                    0x0706060506020504060203020504030106050205030304010505030400000000
+                )
+            )
         }
     }
 }

@@ -88,3 +88,16 @@ library LN {
         }
     }
 }
+
+contract LookUpTable {
+    bytes public constant TABLE = hex"0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
+
+    // gas = 2761 - 569 = 2192. It seems like each byte adds 318 gas units, so final gas usage would be around 5690
+    function test(uint8 index) external pure returns (uint r) {
+        r =
+            (uint(uint8(TABLE[uint(index + 1)])) << 24) +
+            (uint(uint8(TABLE[uint(index + 2)])) << 16) +
+            (uint(uint8(TABLE[uint(index + 3)])) << 8) +
+            uint(uint8((TABLE[uint(index + 4)])));
+    }
+}

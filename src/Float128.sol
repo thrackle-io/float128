@@ -1000,7 +1000,8 @@ library Float128 {
 
     function ln(Float memory _x) public pure returns (Float memory r) {
         Float memory x = _x;
-
+        console2.log("x.mantissa", x.mantissa);
+        console2.log("x.exponent", x.exponent);
         uint manLog2 = log2(uint(x.mantissa)) * BASE ** MAX_DIGITS_MINUS_1;
         console2.log("manLog2 ", manLog2);
         bool negativeExponent = x.exponent < 0;

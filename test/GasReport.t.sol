@@ -4,10 +4,12 @@ pragma solidity 0.8.24;
 import {Test} from "forge-std/Test.sol";
 import {GasHelpers} from "test/GasHelpers.sol";
 import "lib/forge-std/src/console2.sol";
+import "src/LN.sol";
 import {Float, packedFloat, Float128} from "src/Float128.sol";
 
 contract GasReport is Test, GasHelpers {
     using Float128 for Float;
+    using LN for uint256;
 
     function testGasUsedStructs_add() public {
         _primer();
@@ -477,6 +479,16 @@ contract GasReport is Test, GasHelpers {
         flo = a.convertToPackedFloat();
         startMeasuringGas("Gas used - convertToUnpackedFloat");
         Float memory retVal = Float128.convertToUnpackedFloat(flo);
+        gasUsed = stopMeasuringGas();
+        console2.log("convertToUnpackedFloat: ", gasUsed);
+    }
+
+    function testGasUsed_LN() public {
+        uint x = 12345678901234567890123456789012345;
+        uint256 gasUsed = 0;
+        _primer();
+        startMeasuringGas("Gas used - lnWAD2Negative");
+        x.lnWAD2Negative();
         gasUsed = stopMeasuringGas();
         console2.log("convertToUnpackedFloat: ", gasUsed);
     }

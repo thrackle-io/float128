@@ -17,19 +17,27 @@ contract FloatUtils is Test {
         return inputs;
     }
 
+    function _buildFFICalculateLogarithmNaturalWAD2(uint x) internal pure returns (string[] memory) {
+        string[] memory inputs = new string[](3);
+        inputs[0] = "python3";
+        inputs[1] = "./script/ln_wad_2.py";
+        inputs[2] = vm.toString(x);
+        return inputs;
+    }
+
     function _reverseNormalize(Float memory float) internal pure returns (int256 mantissa) {
         int256 normalizedExponent = float.exponent;
         bool negative = false;
-        if(float.exponent < 0) {
+        if (float.exponent < 0) {
             normalizedExponent = normalizedExponent * -1;
             negative = true;
         }
         int256 expo = 1;
-        for(int i = 0; i < normalizedExponent; i++) {
+        for (int i = 0; i < normalizedExponent; i++) {
             expo = expo * 10;
         }
         mantissa = float.mantissa;
-        if(negative) {
+        if (negative) {
             mantissa = mantissa / expo;
         } else {
             mantissa = mantissa * expo;

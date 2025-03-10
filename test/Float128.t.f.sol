@@ -3,10 +3,12 @@ pragma solidity ^0.8.24;
 
 import "forge-std/console2.sol";
 import "src/Float128.sol";
+import "src/LN.sol";
 import "test/FloatUtils.sol";
 
 contract Float128FuzzTest is FloatUtils {
     using Float128 for int256;
+    using LN for uint256;
     function setBounds(int aMan, int aExp, int bMan, int bExp) internal pure returns (int _aMan, int _aExp, int _bMan, int _bExp) {
         // numbers with more than 38 digits lose precision
         _aMan = bound(aMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999);
@@ -601,7 +603,7 @@ contract Float128FuzzTest is FloatUtils {
         (aMan, aExp, , ) = setBounds(aMan, aExp, 0, 0);
         // sqrt root should always receive a positive number
         if (aMan < 0) aMan = aMan * -1;
-        aMan = 271828182845904523536028747135266249;
+        aMan = 27182818284590452353602874713526624977;
         aExp = -37;
 
         string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "sqrt");
@@ -612,12 +614,42 @@ contract Float128FuzzTest is FloatUtils {
         int rMan = result.mantissa;
         int rExp = result.exponent;
 
-        console2.log("aMan", aMan);
-        console2.log("aExp", aExp);
         console2.log("rMan", rMan);
         console2.log("rExp", rExp);
 
         // checkResults(rMan, rExp, pyMan, pyExp);
+    }
+
+    function testEquations_MathLibTests_NaturalLogarithmWAD2(uint256 x) public {
+        x = bound(x, 1, 1e36);
+
+        string[] memory inputs = _buildFFICalculateLogarithmNaturalWAD2(x);
+        bytes memory res = vm.ffi(inputs);
+        int pyVal = abi.decode(res, (int256));
+        uint resUint = uint(-pyVal);
+
+        uint256 solVal = x.lnWAD2Negative();
+        console2.log("returnValLo: ", solVal);
+
+        console2.log("Res: ", resUint);
+        // we usually do this differently, but since all of our results in this library have
+        // perfect precision or 1 ULP, we are calculating relative error directly in here to
+        // avoid bringing all the testing infrastructure from other repos. The math to calculate
+        // the relative error is as follows:
+        // relativeError = (|solVal - pyVal|) / pyVal.
+        // We compare against a TOLERANCE parameter that is represented by TOLERANCE_NUM / TOLERANCE_DEN.
+        // We have then the condition that relativeError <= TOLERANCE, or in other words:
+        // (|solVal - pyVal|) / pyVal <= TOLERANCE_NUM / TOLERANCE_DEN
+        // this lets us avoid division -which is bad for precision- by moving the denominators from both
+        // sides of the inequality to the other side, and we get:
+        // (|solVal - pyVal|) * TOLERANCE_DEN <= TOLERANCE_NUM * pyVal
+        // which is implemented in the followig lines with the exception that it checks the inverted
+        // condition (it checks for violetions of the rule and not for compliance):
+        uint TOLERANCE_DEN = 1e27;
+        uint TOLERANCE_NUM = 1;
+        if ((((resUint > solVal ? resUint - solVal : solVal - resUint) * TOLERANCE_DEN) > TOLERANCE_NUM * resUint)) {
+            revert("out of tolerance");
+        }
     }
 
     function findNumberOfDigits(uint x) internal pure returns (uint log) {
@@ -653,5 +685,18 @@ contract Float128FuzzTest is FloatUtils {
                 log := add(log, 1)
             }
         }
+    }
+}
+
+contract LookUpTable {
+    bytes public constant TABLE = hex"0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
+
+    // gas = 2761 - 569 = 2192. It seems like each byte adds 318 gas units, so final gas usage would be around 5690
+    function test(uint8 index) external pure returns (uint r) {
+        r =
+            (uint(uint8(TABLE[uint(index + 1)])) << 24) +
+            (uint(uint8(TABLE[uint(index + 2)])) << 16) +
+            (uint(uint8(TABLE[uint(index + 3)])) << 8) +
+            uint(uint8((TABLE[uint(index + 4)])));
     }
 }

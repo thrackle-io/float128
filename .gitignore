@@ -32,3 +32,6 @@ node_modules/
 .venv/
 
 .DS_Store
+
+# Ignore Necissist Result DB
+necessist.db

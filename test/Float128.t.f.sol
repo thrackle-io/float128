@@ -291,4 +291,15 @@ contract Float128FuzzTest is FloatUtils {
             }
         }
     }
+
+    function testLNPREC() public view {
+        // int mantissa = 10000000000001;
+        // int exponent = -13;
+        int mantissa = 4956105623702097373953766796770737490946724797997042675293542222085581320357;
+        int exponent = -76;
+        packedFloat retVal = Float128.ln_prec(mantissa, exponent);
+        (int mantissaF, int exponentF) = Float128.decode(retVal);
+        console2.log("mantissaF: ", mantissaF);
+        console2.log("exponentF: ", exponentF);
+    }
 }

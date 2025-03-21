@@ -51,6 +51,36 @@ library Float128 {
     uint constant MAX_76_DIGIT_NUMBER = 9999999999999999999999999999999999999999999999999999999999999999999999999999;
     int constant MAXIMUM_EXPONENT = -18; // guarantees all results will have at least 18 decimals. Constrainst the exponents
 
+    // ln specific variables
+    int constant M = 38; // number of digits of precision that we work with.
+
+    // ln(2) from Wolfram
+    // 0.6931471805599453094172321214581765680755001343602552541206800094933936219696947
+
+    // ln(1.1) from Wolfram
+    // 0.095310179804324860043952123280765092220605365308644199185239808163001014
+
+    // ln10, ln2 and ln1.1 represented as integers with 70 decimal places
+    int constant ln10_M =  23025850929940456840179914546843642076011014886287729760333279009675726;
+    int constant ln2_M =    6931471805599453094172321214581765680755001343602552541206800094933936;
+    int constant ln1dot1_M = 953101798043248600439521232807650922206053653086441991852398081630010;
+    int constant ln1dot01_M = 99503308531680828482153575442607416886796099400587978646095597668666;
+    int constant ln1dot001_M = 9995003330835331668093989205350114607550623931665519970196668289003;
+
+    // ln10, ln2 and ln1.1 represented as integers with M significant digits
+    // int ln10_M = ln10_70; // 10**(70-M+1)
+    // int ln2_M = ln2_70; // 10**(70-M)
+    // int ln1dot1_M = ln1dot1_70; // 10**(70-M-1)
+    // int ln1dot01_M = ln1dot01_70; // 10**(70-M-2)
+    // int ln1dot001_M = ln1dot001_70; // 10**(70-M-3)
+
+    // ln10, ln2 and ln1.1 represented as float128
+    packedFloat constant ln10 = packedFloat.wrap(57631247817450639466916399678377984585681629858437802053308154406552768610828);
+    packedFloat constant ln2 = packedFloat.wrap(57617575929603672933020748731348030977702325377248294479599698904161824288960);
+    packedFloat constant ln1dot1 = packedFloat.wrap(57603701107702929161675104640453437103929836059592015714672457772623619947152);
+    packedFloat constant ln1dot01 = packedFloat.wrap(57589608262471975646722820274969112179049878095757930200802093480908335638944);
+    packedFloat constant ln1dot001 = packedFloat.wrap(57575477953201515296968141758129277768215145325982085921347679342150208320736);
+
     /**
      * @dev adds 2 signed floating point numbers
      * @param a the first addend
@@ -68,8 +98,8 @@ library Float128 {
         uint aExp;
         uint bExp;
         bool isL;
-        console2.log("a", packedFloat.unwrap(a));
-        console2.log("b", packedFloat.unwrap(b));
+        // console2.log("a", packedFloat.unwrap(a));
+        // console2.log("b", packedFloat.unwrap(b));
         if (packedFloat.unwrap(a) == 0) return b;
         if (packedFloat.unwrap(b) == 0) return a;
         assembly {
@@ -235,17 +265,17 @@ library Float128 {
                 }
             }
         }
-        console2.log("isL", isL);
-        console2.log("_adj", _adj);
-        console2.log("a", aMan, aExp >> EXPONENT_BIT);
-        console2.log("b", bMan, bExp >> EXPONENT_BIT);
-        console2.log("isSubtraction", isSubtraction);
-        console2.log("addition", addition);
-        console2.log("sameExponent", sameExponent);
+        // console2.log("isL", isL);
+        // console2.log("_adj", _adj);
+        // console2.log("a", aMan, aExp >> EXPONENT_BIT);
+        // console2.log("b", bMan, bExp >> EXPONENT_BIT);
+        // console2.log("isSubtraction", isSubtraction);
+        // console2.log("addition", addition);
+        // console2.log("sameExponent", sameExponent);
         // normalization
         if (packedFloat.unwrap(r) > 0) {
             uint rExp;
-            console2.log("r", packedFloat.unwrap(r) >> EXPONENT_BIT);
+            // console2.log("r", packedFloat.unwrap(r) >> EXPONENT_BIT);
             assembly {
                 rExp := shr(EXPONENT_BIT, r)
             }
@@ -257,8 +287,8 @@ library Float128 {
                         (addition <= MAX_L_DIGIT_NUMBER && addition >= MIN_L_DIGIT_NUMBER))
                 ) {
                     uint digitsMantissa = findNumberOfDigits(addition);
-                    console2.log("digitsMantissa", digitsMantissa);
-                    console2.log("rExp", rExp);
+                    // console2.log("digitsMantissa", digitsMantissa);
+                    // console2.log("rExp", rExp);
                     assembly {
                         let mantissaReducer := sub(digitsMantissa, MAX_DIGITS_M)
                         let isResultL := slt(MAXIMUM_EXPONENT, add(sub(rExp, ZERO_OFFSET), mantissaReducer))
@@ -956,4 +986,348 @@ library Float128 {
             }
         }
     }
+
+        function ln_prec(int mantissa, int exp) public pure returns (packedFloat result) {
+            int len_mantissa = int(findNumberOfDigits(uint(mantissa)));
+            
+            int positiveExp = exp * -1;
+            int comparison = int(uint(10) ** uint(positiveExp));
+            
+            if(exp <= 0 && mantissa == comparison) {
+                // This is the case in which the argument of the logarithm is 1.
+                return packedFloat.wrap(0);
+            } else if(len_mantissa > positiveExp) {
+                if(len_mantissa > 38) {
+                    uint extra_digits = uint(len_mantissa - 38);
+                    mantissa = mantissa / int(10**extra_digits);
+                    exp = exp + int(extra_digits);
+                } else if(len_mantissa < 38) {
+                    uint extra_digits = uint(38 - len_mantissa);
+                    mantissa = mantissa * int(10 ** extra_digits);
+                    exp = exp - int(extra_digits);
+                }
+                // assert 10**37 <= digits and digits < 10**38
+                int q1 = (10**76) / mantissa;
+                int r1 = (10**76) % mantissa;
+                int q2 = ((10**38) * r1) / mantissa;
+                uint one_over_argument_in_long_int = uint(q1) * (10**38) + uint(q2);
+                int m10 = int(findNumberOfDigits(uint(one_over_argument_in_long_int)));
+                // assert 76 <= m10 and m10 <= 77 # This assertion should hold. Included for testing purposes.
+                uint one_over_arguments_76 = one_over_argument_in_long_int;
+                int m76 = m10;
+                if(m76 > 76) {
+                    uint extra_digits = uint(m76) - 76;
+                    m76 = m76 - int(extra_digits);
+                    one_over_arguments_76 = one_over_argument_in_long_int / 10**extra_digits;
+                }
+                int exp_one_over_argument = 0 - 38 - 76 - exp;
+                // assert exp_one_over_argument + m10 <= 0 # Shouldn't be needed. It has been included for testing purposes.
+                packedFloat a = sub(packedFloat.wrap(0), ln_prec(int(one_over_arguments_76), -m76));
+                packedFloat b = sub(a, toPackedFloat((exp_one_over_argument + m10), 0));
+                result = mul(b, ln10);
+            }
+            
+            if(len_mantissa <= positiveExp) {
+                int256 m10 = len_mantissa + exp;
+                exp = exp - m10;
+                assert(mantissa < 10**76);
+                // assert digits < 10**76
+
+                int256 m2 = 76 - len_mantissa;
+                mantissa = mantissa * int(10**uint(m2));
+                exp = exp - m2;
+
+                // assert number_of_digits(digits) == 76
+                // assert exp == -76
+                int256 k;
+                int256 multiplier_k;
+
+                if(mantissa > (25 * (10**74))) {
+                    if(mantissa > (50 * (10**74))) {
+                        k = 0;
+                        multiplier_k = 1;
+                    } else {
+                        k = 1;
+                        multiplier_k = 2;
+                    }
+                } else {
+                    if(mantissa > (125 * 10**73)) {
+                        k = 2;
+                        multiplier_k = 4;
+                    } else {
+                        k = 3;
+                        multiplier_k = 8;
+                    }
+                }
+                mantissa = mantissa * multiplier_k;
+                uint256 uMantissa = uint256(mantissa);
+                // assert digits > 5 * 10**75
+                // assert digits <= 10**76
+                int256 q1;
+                (q1, uMantissa) = calculateQ1(uMantissa);
+                console2.log("q1", q1);
+                console2.log("q1 mantissa:", uMantissa);
+                // Now digits has already been updated
+                // assert digits > 9 * 10**75
+                // assert digits <= 10**76
+
+                // We find the suitable value of q2 and the multiplier (1.014)**q2
+                // so that 0.986 <= (1.014)**q2 * updated_x <= 1 
+                // We use the following intervals:
+                // (index -> lower bound of the interval)
+                // 0 ->  9 * 10**75
+                // 1 ->  9072 * 10**72
+                // 2 ->  9199 * 10**72
+                // 3 ->  9328 * 10**72
+                // 4 ->  9459 * 10**72
+                // 5 ->  9591 * 10**72
+                // 6 ->  9725 * 10**72 
+                // 7 ->  9860 * 10**72
+                // partition_1014 = [0.9, 0.9072, 0.9199, 0.9328, 0.9459, 0.9591, 0.9725, 0.986, 1]
+
+                int256 q2;
+                (q2, uMantissa) = calculateQ2(uMantissa);
+                console2.log("q2", q2);
+                console2.log("q2 mantissa:", uMantissa);
+                
+                // Now digits has already been updated
+                // assert digits >= 9860 * 10**72
+                // assert digits <= 10**76
+
+                // We find the suitable value of q3 and the multiplier (1.0013)**q3
+                // so that 0.9949 <= (1.0013)**q3 * updated_x <= 1 
+                // We use the following intervals:
+                // (index -> lower bound of the interval)
+                // 0 ->  986 * 10**73
+                // 1 ->  987274190490 * 10**64
+                // 2 ->  988557646937 * 10**64
+                // 3 ->  989842771878 * 10**64
+                // 4 ->  991129567482 * 10**64
+                // 5 ->  992418035920 * 10**64
+                // 6 ->  993708179366 * 10**64 
+                // 7 ->  995 * 10**73
+                // partition_10013 = [0.986, 0.987274190490, 0.988557646937, 0.989842771878, 0.991129567482, 0.992418035920, 0.993708179366, 0.995, 1]
+                
+                int256 q3;
+                (q3, uMantissa) = calculateQ3(uMantissa);
+                console2.log("q3", q3);
+                console2.log("q3 mantissa:", uMantissa);
+                
+                // Now digits has already been updated
+                // assert digits > 9949 * 10**72
+                // assert digits <= 10**76
+
+                int z_int = 10**76 - int(uMantissa);
+                int len_z_int = int(findNumberOfDigits(uint(z_int)));
+
+                console2.log("z_int", z_int);
+                console2.log("len_z_int", len_z_int);
+
+                packedFloat z = toPackedFloat(z_int, (len_z_int - 76 - 38));
+
+                // Number of terms of the Taylor series:
+                int terms = 15;
+                result = z;
+                packedFloat z_to_j = z;
+                for(uint j = 2; j < uint(terms + 1); j++) {
+                    z_to_j = mul(z_to_j, z);
+                    result = add(result, div(z_to_j, toPackedFloat(int(j), int(0))));
+                } 
+
+                packedFloat lnB = toPackedFloat(13902905168991420865477877458246859530, -39);
+                packedFloat lnC = toPackedFloat(12991557316200501157605555658804528711, -40);
+                
+                packedFloat firstTerm = add(result, toPackedFloat(k, 0));
+                packedFloat secondTerm = mul(firstTerm, ln2);
+                packedFloat thirdTerm = add(secondTerm, toPackedFloat(q1, 0));
+                packedFloat fourthTerm = mul(thirdTerm, ln1dot1);
+                packedFloat fifthTerm = add(fourthTerm, toPackedFloat(q2, 0));
+                packedFloat sixthTerm = mul(fifthTerm, lnB);
+                packedFloat seventhTerm = add(sixthTerm, toPackedFloat(q3, 0));
+                packedFloat eigthTerm = mul(seventhTerm, lnC);
+                packedFloat ninthTerm = sub(eigthTerm, toPackedFloat(m10, 0));
+                packedFloat tenthTerm = mul(ninthTerm, ln10);
+                result = mul(tenthTerm, toPackedFloat(-1, 0));
+            }
+        }
+
+        function calculateQ1(uint256 uMantissa) public pure returns(int256 q1, uint256 updatedMantissa) {
+            if(uMantissa > (68300000 * 10**68)) {
+                if(uMantissa > (82000000 * 10**68)) {
+                    if(uMantissa > (90000000 * 10**68)) {
+                        q1 = 0;
+                        // multiplier_q1
+                        updatedMantissa = uMantissa;
+                    } else {
+                        q1 = 1;
+                        updatedMantissa = uMantissa / 10;
+                    }
+                } else {
+                    if(uMantissa > (75000000 * 10**68)) {
+                        q1 = 2;
+                        updatedMantissa = uMantissa + 2 * uMantissa / 10 + uMantissa / 100;
+                    } else {
+                        q1 = 3;
+                        updatedMantissa = uMantissa + 3 * uMantissa / 10 + 3 * uMantissa / 100 + uMantissa / 1000;
+                    }
+                }
+            } else {
+                if(uMantissa > (56400000 * 10**68)) {
+                    if(uMantissa > (62000000 * 10**68)) {
+                        q1 = 4;
+                        updatedMantissa = uMantissa + 4 * uMantissa / 10 + 6 * uMantissa / 100 + 4 * uMantissa / 1000 + uMantissa / 10000;
+                    } else {
+                        q1 = 5;
+                        updatedMantissa = uMantissa + 6 * uMantissa / 10 + 1 * uMantissa / 100 + 0 * uMantissa / 1000 + 5 * uMantissa / 10000 + 1 * uMantissa / 100000;
+                    }
+                } else {
+                    if(uMantissa > (51200000 * 10**68)) {
+                        q1 = 6;
+                        updatedMantissa = uMantissa + 7 * uMantissa / 10 + 7 * uMantissa / 100 + 1 * uMantissa / 1000 + 5 * uMantissa / 10000 + 6 * uMantissa / 100000 + 1 * uMantissa / 1000000;
+                    } else {
+                        q1 = 7;
+                        // multiplier_q1 = 1.1 ** 7 # = 1.9487171
+                        updatedMantissa = uMantissa + 9 * uMantissa / 10 + 4 * uMantissa / 100 + 8 * uMantissa / 1000 + 7 * uMantissa / 10000 + 1 * uMantissa / 100000 + 7 * uMantissa / 1000000 + 1 * uMantissa / 10000000;
+                    }
+                }
+            }
+        } 
+
+        function calculateQ2(uint256 uMantissa) public pure returns(int256 q2, uint256 updatedMantissa) {
+            if(uMantissa > (9459 * 10**72)) {
+                if(uMantissa > (9725 * 10**72)) {
+                    if(uMantissa > 9860 * 10**72) {
+                        q2 = 0;
+                        // multiplier_q2 = 1
+                        updatedMantissa = uMantissa;
+                    } else {
+                        q2 = 1;
+                        updatedMantissa = uMantissa + 0 * uMantissa / 10 + 1 * uMantissa / 100 + 4 * uMantissa / 1000;
+                    }
+                } else {
+                    if(uMantissa > (9591 * 10**72)) {
+                        q2 = 2;
+                        // multiplier_q2 = 1.028196
+                        updatedMantissa = uMantissa + 0 * uMantissa / 10 + 2 * uMantissa / 100 + 8 * uMantissa /1000 
+                                    + 1 * uMantissa / 10000 + 9 * uMantissa / 100000 + 6 * uMantissa / 1000000;
+                    } else {
+                        q2 = 3;
+                        // multiplier_q2 = 1.042590744
+                        updatedMantissa = uMantissa + 0 * uMantissa / 10 + 4 * uMantissa / 100 + 2 * uMantissa / 1000 
+                                    + 5 * uMantissa / 10000 + 9 * uMantissa / 100000 + 0 * uMantissa / 1000000 
+                                    + 7 * uMantissa / 10000000 + 4 * uMantissa / 100000000 + 4 * uMantissa / 1000000000;
+                    }
+                }
+            } else {
+                if(uMantissa > (9199 * 10**72)) {
+                    if(uMantissa > (9328 * 10**72)) {
+                        q2 = 4;
+                        // multiplier_q2 = 1.057187014416
+                        updatedMantissa = uMantissa + 0 * uMantissa / 10 + 5 * uMantissa / 100 + 7 * uMantissa / 1000 
+                                    + 1 * uMantissa / 10000 + 8 * uMantissa / 100000 + 7 * uMantissa / 1000000 
+                                    + 0 * uMantissa / 10000000 + 1 * uMantissa / 100000000 + 4 * uMantissa / 1000000000 
+                                    + 4 * uMantissa / 10000000000 + 1 * uMantissa / 100000000000 + 6 * uMantissa / 1000000000000;
+                    } else {
+                        q2 = 5;
+                        // multiplier_q2 = 1.071987632617824
+                        updatedMantissa = uMantissa + 0 * uMantissa / 10 + 7 * uMantissa / 100 + 1 * uMantissa / 1000 
+                                        + 9 * uMantissa / 10000 + 8 * uMantissa / 100000 + 7 * uMantissa / 1000000 
+                                        + 6 * uMantissa / 10000000 + 3 * uMantissa / 100000000 + 2 * uMantissa / 1000000000 
+                                        + 6 * uMantissa / 10000000000 + 1 * uMantissa / 100000000000 + 7 * uMantissa / 1000000000000 
+                                        + 8 * uMantissa / 10000000000000 + 2 * uMantissa / 100000000000000 + 4 * uMantissa / 1000000000000000;    
+                    }
+                } else {
+                    if (uMantissa > (9072 * 10**72)) {
+                        q2 = 6;
+                        // multiplier_q2 = 1.086995459474473536
+                        updatedMantissa = uMantissa + 0 * uMantissa / 10 + 8 * uMantissa / 100 + 6 * uMantissa / 1000 
+                                    + 9 * uMantissa / 10000 + 9 * uMantissa / 100000 + 5 * uMantissa / 1000000 
+                                    + 4 * uMantissa / 10000000 + 5 * uMantissa / 100000000 + 9 * uMantissa / 1000000000 
+                                    + 4 * uMantissa / 10000000000 + 7 * uMantissa / 100000000000 + 4 * uMantissa / 1000000000000 
+                                    + 4 * uMantissa / 10000000000000 + 7 * uMantissa / 100000000000000 + 3 * uMantissa / 1000000000000000 
+                                    + 5 * uMantissa / 10000000000000000 + 3 * uMantissa / 100000000000000000 + 6 * uMantissa / 1000000000000000000; 
+                    } else {
+                        q2 = 7;
+                        // multiplier_q2 = 1.102213395907116165504
+                        updatedMantissa = uMantissa + 1 * uMantissa / 10 + 0 * uMantissa / 100 + 2 * uMantissa / 1000 
+                                + 2 * uMantissa / 10000 + 1 * uMantissa / 100000 + 3 * uMantissa / 1000000 
+                                + 3 * uMantissa / 10000000 + 9 * uMantissa / 100000000 + 5 * uMantissa / 1000000000 
+                                + 9 * uMantissa / 10000000000 + 0 * uMantissa / 100000000000 + 7 * uMantissa / 1000000000000 
+                                + 1 * uMantissa / 10000000000000 + 1 * uMantissa / 100000000000000 + 6 * uMantissa / 1000000000000000 
+                                + 1 * uMantissa / 10000000000000000 + 6 * uMantissa / 100000000000000000 + 5 * uMantissa / 1000000000000000000 
+                                + 5 * uMantissa / 10000000000000000000 + 0 * uMantissa / 100000000000000000000 + 4 * uMantissa / 1000000000000000000000;    
+                    }
+                }
+            }
+        }
+
+        function calculateQ3(uint256 uMantissa) public pure returns(int256 q3, uint256 updatedMantissa) {
+            if(uMantissa > (991129567482 * 10**64)) {
+                if(uMantissa > (993708179366 * 10**64)) {
+                    if(uMantissa > (995 * 10**73)) {
+                        q3 = 0;
+                        // multiplier_q3 = 1
+                        updatedMantissa = uMantissa;
+                    } else {
+                        q3 = 1;
+                        // multiplier_q3 = 1.0013
+                        updatedMantissa = uMantissa + 0 * uMantissa / 10 + 0 * uMantissa / 100 + 1 * uMantissa / 1000 + 3 * uMantissa / 10000;
+                    }
+                } else {
+                    if(uMantissa > (992418035920 * 10**64)) {
+                        q3 = 2;
+                        // multiplier_q3 = 1.00260169
+                        updatedMantissa = uMantissa + 0 * uMantissa / 10 + 0 * uMantissa / 100 + 2 * uMantissa / 1000 + 6 * uMantissa / 10000 
+                                    + 0 * uMantissa / 100000 + 1 * uMantissa / 1000000 + 6 * uMantissa / 10000000 + 9 * uMantissa / 100000000;
+                    } else {
+                        q3 = 3;
+                        // multiplier_q3 = 1.003905072197
+                        updatedMantissa = uMantissa + 0 * uMantissa / 10 + 0 * uMantissa / 100 + 3 * uMantissa / 1000 + 9 * uMantissa / 10000 
+                                    + 0 * uMantissa / 100000 + 5 * uMantissa / 1000000 + 0 * uMantissa / 10000000 + 7 * uMantissa / 100000000 
+                                    + 2 * uMantissa / 1000000000 + 1 * uMantissa / 10000000000 + 9 * uMantissa / 100000000000 + 7 * uMantissa / 1000000000000; 
+                    }
+                }
+            } else {
+                if(uMantissa > (988557646937 * 10**64)) {
+                    if(uMantissa > (989842771878 * 10**64)) {
+                        q3 = 4;
+                        // multiplier_q3 = 1.0052101487908561
+                        updatedMantissa = uMantissa + 0 * uMantissa / 10 + 0 * uMantissa / 100 + 5 * uMantissa / 1000 + 2 * uMantissa / 10000 
+                                    + 1 * uMantissa / 100000 + 0 * uMantissa / 1000000 + 1 * uMantissa / 10000000 + 4 * uMantissa / 100000000 
+                                    + 8 * uMantissa / 1000000000 + 7 * uMantissa / 10000000000 + 9 * uMantissa / 100000000000 + 0 * uMantissa / 1000000000000 
+                                    + 8 * uMantissa / 10000000000000 + 5 * uMantissa / 100000000000000 + 6 * uMantissa / 1000000000000000 + 1 * uMantissa / 10000000000000000;
+                    } else {
+                        q3 = 5;
+                        // multiplier_q3 = 1.00651692198428421293
+                        updatedMantissa = uMantissa + 0 * uMantissa / 10 + 0 * uMantissa / 100 + 6 * uMantissa / 1000 + 5 * uMantissa / 10000 
+                                    + 1 * uMantissa / 100000 + 6 * uMantissa / 1000000 + 9 * uMantissa / 10000000 + 2 * uMantissa / 100000000 
+                                    + 1 * uMantissa / 1000000000 + 9 * uMantissa / 10000000000 + 8 * uMantissa / 100000000000 + 4 * uMantissa / 1000000000000 
+                                    + 2 * uMantissa / 10000000000000 + 8 * uMantissa / 100000000000000 + 4 * uMantissa / 1000000000000000 + 2 * uMantissa / 10000000000000000 
+                                    + 1 * uMantissa / 100000000000000000 + 2 * uMantissa / 1000000000000000000 + 9 * uMantissa / 10000000000000000000 + 3 * uMantissa / 100000000000000000000; 
+                    }
+                } else {
+                    if(uMantissa > (987274190490 * 10**64)) {
+                        q3 = 6;
+                        // multiplier_q3 = 1.007825393982863782406809
+                        updatedMantissa = uMantissa + 0 * uMantissa / 10 + 0 * uMantissa / 100 + 7 * uMantissa / 1000 + 8 * uMantissa / 10000 
+                                    + 2 * uMantissa / 100000 + 5 * uMantissa / 1000000 + 3 * uMantissa / 10000000 + 9 * uMantissa / 100000000 
+                                    + 3 * uMantissa / 1000000000 + 9 * uMantissa / 10000000000 + 8 * uMantissa / 100000000000 + 2 * uMantissa / 1000000000000 
+                                    + 8 * uMantissa / 10000000000000 + 6 * uMantissa / 100000000000000 + 3 * uMantissa / 1000000000000000 + 7 * uMantissa / 10000000000000000 
+                                    + 8 * uMantissa / 100000000000000000 + 2 * uMantissa / 1000000000000000000 + 4 * uMantissa / 10000000000000000000 + 0 * uMantissa / 100000000000000000000 
+                                    + 6 * uMantissa / 1000000000000000000000 + 8 * uMantissa / 10000000000000000000000 + 0 * uMantissa / 100000000000000000000000 + 9 * uMantissa / 1000000000000000000000000;  
+                    } else {
+                        q3 = 7;
+                        // multiplier_q3 = 1.0091355669950415053239378517
+                        updatedMantissa = uMantissa + 0 * uMantissa / 10 + 0 * uMantissa / 100 + 9 * uMantissa / 1000 + 1 * uMantissa / 10000 
+                                    + 3 * uMantissa / 100000 + 5 * uMantissa / 1000000 + 5 * uMantissa / 10000000 + 6 * uMantissa / 100000000 
+                                    + 6 * uMantissa / 1000000000 + 9 * uMantissa / 10000000000 + 9 * uMantissa / 100000000000 + 5 * uMantissa / 1000000000000 
+                                    + 0 * uMantissa / 10000000000000 + 4 * uMantissa / 100000000000000 + 1 * uMantissa / 1000000000000000 + 5 * uMantissa / 10000000000000000 
+                                    + 0 * uMantissa / 100000000000000000 + 5 * uMantissa / 1000000000000000000 + 3 * uMantissa / 10000000000000000000 + 2 * uMantissa / 100000000000000000000 
+                                    + 3 * uMantissa / 1000000000000000000000 + 9 * uMantissa / 10000000000000000000000 + 3 * uMantissa / 100000000000000000000000 + 7 * uMantissa / 1000000000000000000000000 
+                                    + 8 * uMantissa / 10000000000000000000000000 + 5 * uMantissa / 100000000000000000000000000 + 1 * uMantissa / 1000000000000000000000000000 + 7 * uMantissa / 10000000000000000000000000000; 
+                    }
+                }
+            }
+        }
+
 }

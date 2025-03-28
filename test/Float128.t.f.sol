@@ -262,22 +262,30 @@ contract Float128FuzzTest is FloatUtils {
         assertEq(man, retVal);
     }
 
-    function testFindNumbeOfDigits(uint256 man) public pure {
+    function testFindNumberOfDigits(uint256 man) public pure {
         console2.log(man);
-        uint256 comparison = 1;
         uint256 iter = 0;
-        while (comparison <= man) {
-            comparison *= 10;
-            iter += 1;
-            if (comparison == 1e77 && comparison < man) {
-                iter += 1;
-                break;
-            }
-        }
-
         uint256 retVal = Float128.findNumberOfDigits(man);
 
+        if (man < 0) iter = 1; 
+        while (man != 0) {
+            man /= 10;
+            iter++;
+        }
         assertEq(iter, retVal);
+    }
+
+    function testCheckBounds(int256 man, int exp) public  {
+        (man, exp, , ) = setBounds(man, exp, 0, 0);
+        
+        // man = 1000;
+        // int256 exp = 1e50;
+        packedFloat float = man.toPackedFloat(exp);
+        (man, exp) = float.decode();
+        console2.log(man);
+        console2.log(exp);
+        if (exp > 4000 || exp < -4000) vm.expectRevert("float128: Number out of bounds");
+        Float128.checkBounds(float,float);
     }
 
     function findNumberOfDigits(uint x) internal pure returns (uint log) {

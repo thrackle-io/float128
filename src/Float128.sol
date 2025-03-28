@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 import {Uint512} from "./lib/Uint512.sol";
+import "forge-std/console2.sol";
 
 /**
  * @title Floating point Library base 10 with 38 digits signed
@@ -85,6 +86,25 @@ library Float128 {
     packedFloat constant ln1dot01 = packedFloat.wrap(57613349088293556219052164904225086964202098217851863814911488587192353072694);
     packedFloat constant ln1dot001 = packedFloat.wrap(57606281700034442681733831714222115290139235007041033827277788478998076322779);
 
+    int constant upBound = 4000;
+    int constant downBound = -4000;
+
+    function checkBounds(packedFloat a, packedFloat b) internal pure{
+        
+        assembly {
+            let _expA := shr(EXPONENT_BIT, a)
+            let _expB := shr(EXPONENT_BIT, b)
+            if or(or(lt(_expA, add(ZERO_OFFSET,downBound)),gt(_expA, add(ZERO_OFFSET,upBound))),or(lt(_expB, add(ZERO_OFFSET,downBound)),gt(_expB, add(ZERO_OFFSET,upBound)))){  
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 30) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: Number out of bounds")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+        }
+    }
+
     /**
      * @dev adds 2 signed floating point numbers
      * @param a the first addend
@@ -93,6 +113,18 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function add(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+        assembly {
+            let _expA := shr(EXPONENT_BIT, a)
+            let _expB := shr(EXPONENT_BIT, b)
+            if or(or(lt(_expA, add(ZERO_OFFSET,downBound)),gt(_expA, add(ZERO_OFFSET,upBound))),or(lt(_expB, add(ZERO_OFFSET,downBound)),gt(_expB, add(ZERO_OFFSET,upBound)))){  
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 30) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: Number out of bounds")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+        }
         uint addition;
         bool isSubtraction;
         bool sameExponent;
@@ -279,6 +311,18 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function sub(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+        assembly {
+            let _expA := shr(EXPONENT_BIT, a)
+            let _expB := shr(EXPONENT_BIT, b)
+            if or(or(lt(_expA, add(ZERO_OFFSET,downBound)),gt(_expA, add(ZERO_OFFSET,upBound))),or(lt(_expB, add(ZERO_OFFSET,downBound)),gt(_expB, add(ZERO_OFFSET,upBound)))){  
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 30) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: Number out of bounds")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+        }
         uint addition;
         bool isSubtraction;
         bool sameExponent;
@@ -472,6 +516,18 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function mul(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+        assembly {
+            let _expA := shr(EXPONENT_BIT, a)
+            let _expB := shr(EXPONENT_BIT, b)
+            if or(or(lt(_expA, add(ZERO_OFFSET,downBound)),gt(_expA, add(ZERO_OFFSET,upBound))),or(lt(_expB, add(ZERO_OFFSET,downBound)),gt(_expB, add(ZERO_OFFSET,upBound)))){  
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 30) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: Number out of bounds")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+        }
         uint rMan;
         uint rExp;
         uint r0;
@@ -579,6 +635,18 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function div(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+        assembly {
+            let _expA := shr(EXPONENT_BIT, a)
+            let _expB := shr(EXPONENT_BIT, b)
+            if or(or(lt(_expA, add(ZERO_OFFSET,downBound)),gt(_expA, add(ZERO_OFFSET,upBound))),or(lt(_expB, add(ZERO_OFFSET,downBound)),gt(_expB, add(ZERO_OFFSET,upBound)))){  
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 30) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: Number out of bounds")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+        }
         r = div(a, b, false);
     }
 
@@ -589,7 +657,7 @@ library Float128 {
      * @return r the result of a / b
      * @notice this version of the function uses only the packedFloat type
      */
-    function divL(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {
+    function divL(packedFloat a, packedFloat b) internal pure returns (packedFloat r) {        
         r = div(a, b, true);
     }
 
@@ -602,6 +670,16 @@ library Float128 {
      */
     function div(packedFloat a, packedFloat b, bool rL) internal pure returns (packedFloat r) {
         assembly {
+            let _expA := shr(EXPONENT_BIT, a)
+            let _expB := shr(EXPONENT_BIT, b)
+            if or(or(lt(_expA, add(ZERO_OFFSET,downBound)),gt(_expA, add(ZERO_OFFSET,upBound))),or(lt(_expB, add(ZERO_OFFSET,downBound)),gt(_expB, add(ZERO_OFFSET,upBound)))){  
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 30) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: Number out of bounds")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
             if eq(and(b, MANTISSA_MASK), 0) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
@@ -711,6 +789,18 @@ library Float128 {
      * @notice this version of the function uses only the packedFloat type
      */
     function sqrt(packedFloat a) internal pure returns (packedFloat r) {
+        assembly {
+            let _expA := shr(EXPONENT_BIT, a)
+            let _expB := shr(EXPONENT_BIT, b)
+            if or(or(lt(_expA, add(ZERO_OFFSET,downBound)),gt(_expA, add(ZERO_OFFSET,upBound))),or(lt(_expB, add(ZERO_OFFSET,downBound)),gt(_expB, add(ZERO_OFFSET,upBound)))){  
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 30) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: Number out of bounds")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+        }
         uint s;
         int aExp;
         uint x;
@@ -1218,6 +1308,15 @@ library Float128 {
         int exponent;
         bool inputL;
         assembly {
+            let _expA := shr(EXPONENT_BIT, result)
+            if or(lt(_expA, add(ZERO_OFFSET,downBound)),gt(_expA, add(ZERO_OFFSET,upBound))){  
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 30) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: Number out of bounds")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
             inputL := gt(and(input, MANTISSA_L_FLAG_MASK), 0)
             mantissa := and(input, MANTISSA_MASK)
             exponent := sub(shr(EXPONENT_BIT, and(input, EXPONENT_MASK)), ZERO_OFFSET)
@@ -1332,6 +1431,17 @@ library Float128 {
         int256 m10,
         uint256 mantissa
     ) internal pure returns (packedFloat finalResult) {
+        assembly {
+            let _expA := shr(EXPONENT_BIT, result)
+            if or(lt(_expA, add(ZERO_OFFSET,downBound)),gt(_expA, add(ZERO_OFFSET,upBound))){  
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 30) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: Number out of bounds")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
+        }
         // Now digits has already been updated
         int z_int = 10 ** 76 - int(mantissa);
         int len_z_int = int(findNumberOfDigits(uint(z_int)));

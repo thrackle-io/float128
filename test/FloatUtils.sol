@@ -49,8 +49,8 @@ contract FloatUtils is Test {
     function setBounds(int aMan, int aExp, int bMan, int bExp) internal pure returns (int _aMan, int _aExp, int _bMan, int _bExp) {
         // numbers with more than 38 digits lose precision
         _aMan = bound(aMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999);
-        _aExp = bound(aExp, -74, 74);
+        _aExp = bound(aExp, -4000, 4000);
         _bMan = bound(bMan, -99999999999999999999999999999999999999, 99999999999999999999999999999999999999);
-        _bExp = bound(bExp, -74, 74);
+        _bExp = bound(bExp, -4000, 4000);
     }
 }

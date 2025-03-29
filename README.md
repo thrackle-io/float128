@@ -27,6 +27,9 @@ Some examples:
 
 Floating point numbers can represent the same number in infinite ways by playing with the exponent. For instance, the first example could be also represented by -10 x $10^{-5}$, -100 x $10^{-6}$, -1000 x $10^{-7}$, etc.
 
+### WARNING
+This library will only handle numbers with exponents within the range of **-3000** to **3000**. Larger or smaller numbers may result in precision loss and/or overflow/underflow.
+
 #### Library main features
 
 - Base: 10

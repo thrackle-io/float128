@@ -457,29 +457,37 @@ library Float128 {
             let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
             Loperation := or(aL, bL)
             // we extract the exponent and mantissas for both
-            let aExp := and(a, EXPONENT_MASK)
-            let bExp := and(b, EXPONENT_MASK)
+            let aExp := shr(EXPONENT_BIT, a)
+            let bExp := shr(EXPONENT_BIT, b)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
+            if or(lt(aExp, MAX_DIGITS_M_X_2), lt(aExp, MAX_DIGITS_M_X_2)) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 19) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: underflow")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
 
             if Loperation {
                 // we make sure both of them are size L before continuing
                 if iszero(aL) {
                     aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
-                    aExp := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                    aExp := sub(aExp, DIGIT_DIFF_L_M)
                 }
                 if iszero(bL) {
                     bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
-                    bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                    bExp := sub(bExp, DIGIT_DIFF_L_M)
                 }
-                rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
+                rExp := sub(add(aExp, bExp), ZERO_OFFSET)
                 let mm := mulmod(aMan, bMan, not(0))
                 r0 := mul(aMan, bMan)
                 r1 := sub(sub(mm, r0), lt(mm, r0))
             }
             if iszero(Loperation) {
                 rMan := mul(aMan, bMan)
-                rExp := sub(add(shr(EXPONENT_BIT, aExp), shr(EXPONENT_BIT, bExp)), ZERO_OFFSET)
+                rExp := sub(add(aExp, bExp), ZERO_OFFSET)
             }
         }
         if (Loperation) {

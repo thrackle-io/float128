@@ -71,6 +71,15 @@ library Float128 {
             let bExp := and(b, EXPONENT_MASK)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
+            // we check exponents cannot maliciously underflow while expanding
+            if or(lt(shr(EXPONENT_BIT, aExp), MAX_DIGITS_M_X_2), lt(shr(EXPONENT_BIT, aExp), MAX_DIGITS_M_X_2)) {
+                let ptr := mload(0x40) // Get free memory pointer
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                mstore(add(ptr, 0x04), 0x20) // String offset
+                mstore(add(ptr, 0x24), 19) // Revert reason length
+                mstore(add(ptr, 0x44), "float128: underflow")
+                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+            }
             if iszero(or(aL, bL)) {
                 // we add 38 digits of precision in the case of subtraction
                 if gt(aExp, bExp) {

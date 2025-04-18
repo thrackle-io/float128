@@ -62,6 +62,47 @@ contract Float128FuzzTest is FloatCommon {
         if (pyMan != 0) assertEq(pyExp, rExp);
     }
 
+    function testEncoded_add_maliciousEncoding(uint8 distanceFromExpBound) public {
+        int bExp = 0;
+        int bMan = 1;
+        packedFloat b = bMan.toPackedFloat(bExp);
+        {
+            // very negative exponent
+            console2.log("negative", distanceFromExpBound);
+            uint encodedNegativeExp = uint(distanceFromExpBound) << Float128.EXPONENT_BIT;
+            uint maliciousMantissa = 1;
+            int aMan = int(maliciousMantissa);
+            uint maliciousFloatEncoded = encodedNegativeExp | maliciousMantissa;
+            int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
+            packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
+            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2) vm.expectRevert("float128: underflow");
+            packedFloat result = a.add(b);
+            string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add", 0);
+            bytes memory res = vm.ffi(inputs);
+            (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+            (int rMan, int rExp) = Float128.decode(result);
+
+            checkResults(result, rMan, rExp, pyMan, pyExp, 1);
+        }
+        {
+            // very positive exponent
+            /// @notice there is no overflow risk since normalization can only make the exponent smaller. Never bigger.
+            console2.log("positive", distanceFromExpBound);
+            uint encodedPositiveExp = ((2 ** 14 - 1) - uint(distanceFromExpBound)) << Float128.EXPONENT_BIT;
+            int aMan = int(1e71);
+            uint maliciousFloatEncoded = encodedPositiveExp | uint(aMan) | Float128.MANTISSA_L_FLAG_MASK;
+            int aExp = int(Float128.ZERO_OFFSET) - int(uint(distanceFromExpBound)) - 1;
+            packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
+
+            packedFloat result = a.add(b);
+            string[] memory inputs = _buildFFIMul128(aMan, aExp, bMan, bExp, "add", 0);
+            bytes memory res = vm.ffi(inputs);
+            (int pyMan, int pyExp) = abi.decode((res), (int256, int256));
+            (int rMan, int rExp) = Float128.decode(result);
+            checkResults(result, rMan, rExp, pyMan, pyExp, 1);
+        }
+    }
+
     function testEncoded_mul(int aMan, int aExp, int bMan, int bExp) public {
         (aMan, aExp, bMan, bExp) = setBounds(aMan, aExp, bMan, bExp);
 

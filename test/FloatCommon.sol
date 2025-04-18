@@ -150,8 +150,7 @@ abstract contract FloatCommon is FloatUtils {
         assertEq(rExp, bExp, "Solidity result is not consistent with zero rules");
     }
 
-    /// forge-config: default.allow_internal_expect_revert = true
-    function testEncoded_sqrt_0() public {
+    function testEncoded_sqrt_0() public pure {
         packedFloat a = Float128.toPackedFloat(0, ZERO_OFFSET_NEG);
 
         // we initialize result to a different number to make sure the test doesn't lie to us

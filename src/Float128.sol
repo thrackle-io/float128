@@ -769,7 +769,7 @@ library Float128 {
                 xAux := sar(mul(cmp, 4), xAux)
                 s := shl(mul(cmp, 2), s)
 
-                s := shl(mul(or(gt(xAux, 0x8), eq(xAux, 0x8)), 2), s)
+                s := shl(mul(or(gt(xAux, 0x4), eq(xAux, 0x4)), 1), s)
 
                 s := shr(1, add(div(x, s), s))
                 s := shr(1, add(div(x, s), s))

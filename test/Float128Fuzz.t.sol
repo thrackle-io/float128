@@ -221,13 +221,13 @@ contract Float128FuzzTest is FloatCommon {
     function testEncoded_sqrt_maliciousEncoding(uint8 distanceFromExpBound) public {
         {
             // very negative exponent
+            /// @notice the way sqrt handles the exponent makes it impossible for it to underflow
             uint encodedNegativeExp = uint(distanceFromExpBound) << Float128.EXPONENT_BIT;
             uint maliciousMantissa = 1e37;
             int aMan = int(maliciousMantissa);
             uint maliciousFloatEncoded = encodedNegativeExp | maliciousMantissa;
             int aExp = int(uint(distanceFromExpBound)) - int(Float128.ZERO_OFFSET);
             packedFloat a = packedFloat.wrap(maliciousFloatEncoded);
-            if (distanceFromExpBound < Float128.MAX_DIGITS_M_X_2 * 2) vm.expectRevert("float128: underflow");
             packedFloat result = a.sqrt();
             string[] memory inputs = _buildFFIMul128(aMan, aExp, 0, 0, "sqrt", 0);
             bytes memory res = vm.ffi(inputs);

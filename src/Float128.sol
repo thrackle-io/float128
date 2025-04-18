@@ -716,14 +716,6 @@ library Float128 {
             aL := gt(and(a, MANTISSA_L_FLAG_MASK), 0)
             aMan := and(a, MANTISSA_MASK)
             aExp := shr(EXPONENT_BIT, a)
-            if lt(aExp, shl(1, MAX_DIGITS_M_X_2)) {
-                let ptr := mload(0x40) // Get free memory pointer
-                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
-                mstore(add(ptr, 0x04), 0x20) // String offset
-                mstore(add(ptr, 0x24), 19) // Revert reason length
-                mstore(add(ptr, 0x44), "float128: underflow")
-                revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
-            }
         }
 
         if ((aL && aExp > int(ZERO_OFFSET) - int(DIGIT_DIFF_L_M - 1)) || (!aL && aExp > int(ZERO_OFFSET) - int(MAX_DIGITS_M / 2 - 1))) {

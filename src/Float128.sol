@@ -67,12 +67,12 @@ library Float128 {
             let bL := gt(and(b, MANTISSA_L_FLAG_MASK), 0)
             isSubtraction := xor(and(a, MANTISSA_SIGN_MASK), and(b, MANTISSA_SIGN_MASK))
             // we extract the exponent and mantissas for both
-            let aExp := and(a, EXPONENT_MASK)
-            let bExp := and(b, EXPONENT_MASK)
+            let aExp := shr(EXPONENT_BIT, a)
+            let bExp := shr(EXPONENT_BIT, b)
             let aMan := and(a, MANTISSA_MASK)
             let bMan := and(b, MANTISSA_MASK)
             // we check exponents cannot maliciously underflow while expanding
-            if or(lt(shr(EXPONENT_BIT, aExp), MAX_DIGITS_M_X_2), lt(shr(EXPONENT_BIT, aExp), MAX_DIGITS_M_X_2)) {
+            if or(lt(aExp, MAX_DIGITS_M_X_2), lt(aExp, MAX_DIGITS_M_X_2)) {
                 let ptr := mload(0x40) // Get free memory pointer
                 mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
                 mstore(add(ptr, 0x04), 0x20) // String offset
@@ -83,8 +83,8 @@ library Float128 {
             if iszero(or(aL, bL)) {
                 // we add 38 digits of precision in the case of subtraction
                 if gt(aExp, bExp) {
-                    r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
+                    r := shl(EXPONENT_BIT, sub(aExp, MAX_DIGITS_M))
+                    let adj := sub(shr(EXPONENT_BIT, r), bExp)
                     let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         bMan := mul(bMan, exp(BASE, sub(0, adj)))
@@ -96,8 +96,8 @@ library Float128 {
                     }
                 }
                 if gt(bExp, aExp) {
-                    r := sub(bExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
+                    r := shl(EXPONENT_BIT, sub(bExp, MAX_DIGITS_M))
+                    let adj := sub(shr(EXPONENT_BIT, r), aExp)
                     let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         aMan := mul(aMan, exp(BASE, sub(0, adj)))
@@ -112,7 +112,7 @@ library Float128 {
                 if eq(aExp, bExp) {
                     aMan := mul(aMan, BASE_TO_THE_MAX_DIGITS_M)
                     bMan := mul(bMan, BASE_TO_THE_MAX_DIGITS_M)
-                    r := sub(aExp, shl(EXPONENT_BIT, MAX_DIGITS_M))
+                    r := shl(EXPONENT_BIT, sub(aExp, MAX_DIGITS_M))
                     sameExponent := 1
                 }
             }
@@ -120,16 +120,16 @@ library Float128 {
                 // we make sure both of them are size L before continuing
                 if iszero(aL) {
                     aMan := mul(aMan, BASE_TO_THE_DIGIT_DIFF)
-                    aExp := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                    aExp := sub(aExp, DIGIT_DIFF_L_M)
                 }
                 if iszero(bL) {
                     bMan := mul(bMan, BASE_TO_THE_DIGIT_DIFF)
-                    bExp := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_L_M))
+                    bExp := sub(bExp, DIGIT_DIFF_L_M)
                 }
                 // we adjust the significant digits and set the exponent of the result
                 if gt(aExp, bExp) {
-                    r := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_76_L))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, bExp))
+                    r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
+                    let adj := sub(shr(EXPONENT_BIT, r), bExp)
                     let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         bMan := mul(bMan, exp(BASE, sub(0, adj)))
@@ -141,8 +141,8 @@ library Float128 {
                     }
                 }
                 if gt(bExp, aExp) {
-                    r := sub(bExp, shl(EXPONENT_BIT, DIGIT_DIFF_76_L))
-                    let adj := sub(shr(EXPONENT_BIT, r), shr(EXPONENT_BIT, aExp))
+                    r := shl(EXPONENT_BIT, sub(bExp, DIGIT_DIFF_76_L))
+                    let adj := sub(shr(EXPONENT_BIT, r), aExp)
                     let neg := and(TWO_COMPLEMENT_SIGN_MASK, adj)
                     if neg {
                         aMan := mul(aMan, exp(BASE, sub(0, adj)))
@@ -157,7 +157,7 @@ library Float128 {
                 if eq(aExp, bExp) {
                     aMan := mul(aMan, BASE_TO_THE_DIFF_76_L)
                     bMan := mul(bMan, BASE_TO_THE_DIFF_76_L)
-                    r := sub(aExp, shl(EXPONENT_BIT, DIGIT_DIFF_76_L))
+                    r := shl(EXPONENT_BIT, sub(aExp, DIGIT_DIFF_76_L))
                     sameExponent := 1
                 }
             }

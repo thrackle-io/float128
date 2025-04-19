@@ -1102,6 +1102,15 @@ library Float128 {
         // we start by extracting the sign of the mantissa
         if (mantissa != 0) {
             assembly {
+                // we make sure the number can't underflow during normalization
+                if slt(exponent, sub(MAX_DIGITS_M_X_2, ZERO_OFFSET)) {
+                    let ptr := mload(0x40) // Get free memory pointer
+                    mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Selector for method Error(string)
+                    mstore(add(ptr, 0x04), 0x20) // String offset
+                    mstore(add(ptr, 0x24), 19) // Revert reason length
+                    mstore(add(ptr, 0x44), "float128: underflow")
+                    revert(ptr, 0x64) // Revert data length is 4 bytes for selector and 3 slots of 0x20 bytes
+                }
                 if and(mantissa, TWO_COMPLEMENT_SIGN_MASK) {
                     float := MANTISSA_SIGN_MASK
                     mantissa := sub(0, mantissa)
@@ -1111,13 +1120,18 @@ library Float128 {
             if (!((mantissa <= int(MAX_M_DIGIT_NUMBER) && mantissa >= int(MIN_M_DIGIT_NUMBER)) || (mantissa <= int(MAX_L_DIGIT_NUMBER) && mantissa >= int(MIN_L_DIGIT_NUMBER)))) {
                 digitsMantissa = findNumberOfDigits(uint(mantissa));
                 assembly {
+                    // we check how far the amount of digits is from the M-man digits
                     mantissaMultiplier := sub(digitsMantissa, MAX_DIGITS_M)
+                    // we check the resulting exponent to see if we normalize to L-man or M-man format
                     let isResultL := slt(MAXIMUM_EXPONENT, add(exponent, mantissaMultiplier))
+                    // if the result will be a L-man size, we adjust the multiplier accordingly
                     if isResultL {
                         mantissaMultiplier := sub(mantissaMultiplier, DIGIT_DIFF_L_M)
                         float := or(float, MANTISSA_L_FLAG_MASK)
                     }
+                    // we now adjust the exponent
                     exponent := add(exponent, mantissaMultiplier)
+                    // we divide (truncate) or multiply (expand) the mantissa depending on the sign of the multiplier
                     let negativeMultiplier := and(TWO_COMPLEMENT_SIGN_MASK, mantissaMultiplier)
                     if negativeMultiplier {
                         mantissa := mul(mantissa, exp(BASE, sub(0, mantissaMultiplier)))
@@ -1127,12 +1141,14 @@ library Float128 {
                     }
                 }
             } else if ((mantissa <= int(MAX_M_DIGIT_NUMBER) && mantissa >= int(MIN_M_DIGIT_NUMBER)) && exponent > MAXIMUM_EXPONENT) {
+                // we still check if the prenormalized number has an exponent bigger than MAXIMUM_EXPONENT in which case we use L-man format
                 assembly {
                     mantissa := mul(mantissa, BASE_TO_THE_DIGIT_DIFF)
                     exponent := sub(exponent, DIGIT_DIFF_L_M)
                     float := add(float, MANTISSA_L_FLAG_MASK)
                 }
             } else if ((mantissa <= int(MAX_L_DIGIT_NUMBER) && mantissa >= int(MIN_L_DIGIT_NUMBER))) {
+                // if the prenormalized number has a a L-man size we make sure to add the L fLag
                 assembly {
                     float := add(float, MANTISSA_L_FLAG_MASK)
                 }

@@ -281,18 +281,14 @@ contract Float128FuzzTest is FloatCommon {
      * @dev pure Solidity implementation of the normalization procedure that takes place in toPackedFloat function.
      */
     function emulateNormalization(int man, int exp) internal pure returns (int mantissa, int exponent) {
-        console2.log("man", man);
-        console2.log("exp", exp);
         if (man == 0) return (0, -8192);
         mantissa = man;
         exponent = exp;
         uint nDigits = findNumberOfDigits(uint(man < 0 ? -1 * man : man));
         if (nDigits != 38 && nDigits != 72) {
             int adj = int(Float128.MAX_DIGITS_M) - int(nDigits);
-            console2.log("adj", adj);
             exponent = exp - adj;
             if (exponent > Float128.MAXIMUM_EXPONENT) {
-                console2.log("L", exp);
                 if (adj > 0) {
                     exponent -= int(Float128.DIGIT_DIFF_L_M);
                     mantissa *= (int(Float128.BASE_TO_THE_DIGIT_DIFF * Float128.BASE ** uint(adj)));
@@ -301,7 +297,6 @@ contract Float128FuzzTest is FloatCommon {
                     mantissa /= (int(Float128.BASE_TO_THE_DIGIT_DIFF) / int(Float128.BASE ** uint(-adj)));
                 }
             } else {
-                console2.log("M", exp);
                 if (adj > 0) {
                     mantissa *= int(Float128.BASE ** uint(adj));
                 } else {
@@ -312,8 +307,6 @@ contract Float128FuzzTest is FloatCommon {
             exponent -= int(Float128.DIGIT_DIFF_L_M);
             mantissa *= (int(Float128.BASE_TO_THE_DIGIT_DIFF));
         }
-        console2.log("mantissa", mantissa);
-        console2.log("exponent", exponent);
     }
 
     function testEncoded_mul(int aMan, int aExp, int bMan, int bExp) public {
